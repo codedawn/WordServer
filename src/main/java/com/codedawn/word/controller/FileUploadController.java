@@ -76,11 +76,7 @@ public class FileUploadController {
     }
 
 
-//    @GetMapping("/queryUrl")
-//    public ResponseUtil queryDownloadFileUrl() {
-//
-//        return ResponseUtil.ensureSucceed(ResponseCode.DOWNLOAD_SUCCEED).data("url", synchronizeRecord.getUrl());
-//    }
+
 
     @GetMapping("/download")
     public String downloadFile(@RequestHeader("userId") String userId,@RequestParam("timestamp") Long timestamp,HttpServletResponse response) {
