@@ -2,7 +2,6 @@ package com.codedawn.word.util;
 
 /**
  * @author codedawn
- * @date 2021-06-27 17:04
  */
 
 public enum ResponseCode {

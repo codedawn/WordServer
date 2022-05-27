@@ -2,6 +2,7 @@ package com.codedawn.word.controller;
 
 import com.codedawn.word.entity.SynchronizeRecord;
 import com.codedawn.word.mapper.SynchronizeRecordMapper;
+import com.codedawn.word.service.SynchronizeRecordService;
 import com.codedawn.word.util.ResponseCode;
 import com.codedawn.word.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -26,13 +27,19 @@ public class FileUploadController {
     private static final String filePath="/uploadFile/";
 
 
-    @Autowired
-    private SynchronizeRecordMapper synchronizeRecordMapper;
+    private SynchronizeRecordService synchronizeRecordService;
 
 
+    /**
+     * 上传文件
+     * @param file
+     * @param userId
+     * @return
+     */
     @RequestMapping(value = "/upload")
     public ResponseUtil upload(@RequestParam("file") MultipartFile file, @RequestHeader("userId") String userId) {
         try {
+            //文件为空
             if (file.isEmpty()) {
                 return ResponseUtil.ensureFailure(ResponseCode.UPLOAD_FAILURE);
             }
@@ -54,13 +61,15 @@ public class FileUploadController {
                 dest.getParentFile().mkdirs();// 新建文件夹
             }
             file.transferTo(dest);// 文件写入
+            //创建上传记录
             SynchronizeRecord synchronizeRecord = new SynchronizeRecord();
             synchronizeRecord.setTimestamp(System.currentTimeMillis());
             synchronizeRecord.setUserId(userId);
             synchronizeRecord.setUrl(path);
-            SynchronizeRecord record = synchronizeRecordMapper.selectSynchronizeRecordByOpenId(userId);
+            //写入到数据库中
+            SynchronizeRecord record = synchronizeRecordService.selectSynchronizeRecordByOpenId(userId);
             if (record == null) {
-                synchronizeRecordMapper.insertSynchronizeRecord(synchronizeRecord);
+                synchronizeRecordService.insertSynchronizeRecord(synchronizeRecord);
             }else {
                 record.setUrl(synchronizeRecord.getUrl());
                 record.setTimestamp(synchronizeRecord.getTimestamp());
@@ -76,17 +85,23 @@ public class FileUploadController {
     }
 
 
-
-
+    /**
+     * 下载文件
+     * @param userId
+     * @param timestamp
+     * @param response
+     * @return
+     */
     @GetMapping("/download")
     public String downloadFile(@RequestHeader("userId") String userId,@RequestParam("timestamp") Long timestamp,HttpServletResponse response) {
 
 
-        if (timestamp == null) {
-            //"没有携带时间戳"
-            return ResponseUtil.ensureFailure(ResponseCode.DOWNLOAD_FAILURE).toJson();
-        }
-        SynchronizeRecord synchronizeRecord = synchronizeRecordMapper.selectSynchronizeRecordByOpenId(userId);
+//        if (timestamp == null) {
+//            //"没有携带时间戳"
+//            return ResponseUtil.ensureFailure(ResponseCode.DOWNLOAD_FAILURE).toJson();
+//        }
+        //跳过userid查询上传记录
+        SynchronizeRecord synchronizeRecord = synchronizeRecordService.selectSynchronizeRecordByOpenId(userId);
         if (synchronizeRecord == null) {
             //"没有上传记录"
             return  ResponseUtil.ensureFailure(ResponseCode.NO_RECORD_DOWNLOAD_FAILURE).toJson();
@@ -99,6 +114,7 @@ public class FileUploadController {
 //        String path = f.getAbsolutePath()+File.separator;
         String fileName = userId+".zip";// 文件名
         //设置文件路径
+
         File file = new File(synchronizeRecord.getUrl());
         //File file = new File(realPath , fileName);
         if (file.exists()) {

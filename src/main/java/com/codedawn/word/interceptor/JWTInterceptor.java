@@ -17,8 +17,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
+ *登录认证拦截器
  * @author codedawn
- * @date 2021-09-08 9:12
+ *
  */
 @Component
 public class JWTInterceptor implements HandlerInterceptor {
@@ -30,10 +31,12 @@ public class JWTInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String token = request.getHeader("token");
         String userId = request.getHeader("userId");
+        //校验token合法性
         if (token==null||userId==null|| "".equals(token)||"".equals(userId)) {
             errorResult(response,ResponseCode.ILLEGAL_Token);
             return false;
         }
+        //向QQ提供的接口发起请求验证token是否有效
         Response resp = OkhttpUtil.request(QQUrl+token);
 
         assert resp.body() != null;
